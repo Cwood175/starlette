@@ -57,7 +57,8 @@ class CORSMiddleware:
             preflight_vary.append("Access-Control-Request-Method")
         if explicit_allow_origin:
             preflight_vary.append("Origin")
-        preflight_headers["Vary"] = ", ".join(preflight_vary)
+        if preflight_vary:
+            preflight_headers["Vary"] = ", ".join(preflight_vary)
 
         self.app = app
         self.allow_origins = allow_origins

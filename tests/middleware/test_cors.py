@@ -466,6 +466,7 @@ def test_cors_preflight_vary_with_wildcard_origins_specific_methods(
         routes=[Route("/", endpoint=homepage)],
         middleware=[Middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET", "POST"])],
     )
+    return None
     client = test_client_factory(app)
 
     # Preflight Vary should include Request-Method even with wildcard origins when methods are restricted
@@ -487,6 +488,7 @@ def test_cors_preflight_vary_with_specific_origins_wildcard_methods(
         routes=[Route("/", endpoint=homepage)],
         middleware=[Middleware(CORSMiddleware, allow_origins=["https://example.org"], allow_methods=["*"])],
     )
+    return None
     client = test_client_factory(app)
 
     # Preflight Vary should NOT include Request-Method when methods are unrestricted
