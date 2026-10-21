@@ -28,9 +28,9 @@ def has_required_scope(conn: HTTPConnection, scopes: typing.Sequence[str]) -> bo
 
 
 def requires(
-    scopes: str | typing.Sequence[str],
+    scopes: typing.Union[str, typing.Sequence[str]],
     status_code: int = 403,
-    redirect: str | None = None,
+    redirect: typing.Optional[str] = None,
 ) -> typing.Callable[
     [typing.Callable[_P, typing.Any]], typing.Callable[_P, typing.Any]
 ]:
@@ -115,7 +115,7 @@ class AuthenticationError(Exception):
 class AuthenticationBackend:
     async def authenticate(
         self, conn: HTTPConnection
-    ) -> tuple[AuthCredentials, BaseUser] | None:
+    ) -> typing.Optional[typing.Tuple[AuthCredentials, BaseUser]]:
         raise NotImplementedError()  # pragma: no cover
 
 

@@ -30,7 +30,7 @@ class NoMatchFound(Exception):
     if no matching route exists.
     """
 
-    def __init__(self, name: str, path_params: dict[str, typing.Any]) -> None:
+    def __init__(self, name: str, path_params: typing.Dict[str, typing.Any]) -> None:
         params = ", ".join(list(path_params.keys()))
         super().__init__(f'No route exists for name "{name}" and params "{params}".')
 
@@ -108,9 +108,9 @@ def get_name(endpoint: typing.Callable[..., typing.Any]) -> str:
 
 def replace_params(
     path: str,
-    param_convertors: dict[str, Convertor[typing.Any]],
-    path_params: dict[str, str],
-) -> tuple[str, dict[str, str]]:
+    param_convertors: typing.Dict[str, Convertor[typing.Any]],
+    path_params: typing.Dict[str, str],
+) -> typing.Tuple[str, typing.Dict[str, str]]:
     for key, value in list(path_params.items()):
         if "{" + key + "}" in path:
             convertor = param_convertors[key]
@@ -126,7 +126,7 @@ PARAM_REGEX = re.compile("{([a-zA-Z_][a-zA-Z0-9_]*)(:[a-zA-Z_][a-zA-Z0-9_]*)?}")
 
 def compile_path(
     path: str,
-) -> tuple[typing.Pattern[str], str, dict[str, Convertor[typing.Any]]]:
+) -> typing.Tuple[typing.Pattern[str], str, typing.Dict[str, Convertor[typing.Any]]]:
     """
     Given a path string, like: "/{username:str}",
     or a host string, like: "{subdomain}.mydomain.org", return a three-tuple
@@ -183,7 +183,7 @@ def compile_path(
 
 
 class BaseRoute:
-    def matches(self, scope: Scope) -> tuple[Match, Scope]:
+    def matches(self, scope: Scope) -> typing.Tuple[Match, Scope]:
         raise NotImplementedError()  # pragma: no cover
 
     def url_path_for(self, name: str, /, **path_params: typing.Any) -> URLPath:
@@ -218,10 +218,10 @@ class Route(BaseRoute):
         path: str,
         endpoint: typing.Callable[..., typing.Any],
         *,
-        methods: list[str] | None = None,
-        name: str | None = None,
+        methods: typing.Optional[typing.List[str]] = None,
+        name: typing.Optional[str] = None,
         include_in_schema: bool = True,
-        middleware: typing.Sequence[Middleware] | None = None,
+        middleware: typing.Optional[typing.Sequence[Middleware]] = None,
     ) -> None:
         assert path.startswith("/"), "Routed paths must start with '/'"
         self.path = path
@@ -389,11 +389,11 @@ class Mount(BaseRoute):
     def __init__(
         self,
         path: str,
-        app: ASGIApp | None = None,
-        routes: typing.Sequence[BaseRoute] | None = None,
-        name: str | None = None,
+        app: typing.Optional[ASGIApp] = None,
+        routes: typing.Optional[typing.Sequence[BaseRoute]] = None,
+        name: typing.Optional[str] = None,
         *,
-        middleware: typing.Sequence[Middleware] | None = None,
+        middleware: typing.Optional[typing.Sequence[Middleware]] = None,
     ) -> None:
         assert path == "" or path.startswith("/"), "Routed paths must start with '/'"
         assert (
@@ -414,7 +414,7 @@ class Mount(BaseRoute):
         )
 
     @property
-    def routes(self) -> list[BaseRoute]:
+    def routes(self) -> typing.List[BaseRoute]:
         return getattr(self._base_app, "routes", [])
 
     def matches(self, scope: Scope) -> typing.Tuple[Match, Scope]:
@@ -500,7 +500,9 @@ class Mount(BaseRoute):
 
 
 class Host(BaseRoute):
-    def __init__(self, host: str, app: ASGIApp, name: str | None = None) -> None:
+    def __init__(
+        self, host: str, app: ASGIApp, name: typing.Optional[str] = None
+    ) -> None:
         assert not host.startswith("/"), "Host must not start with '/'"
         self.host = host
         self.app = app
@@ -508,7 +510,7 @@ class Host(BaseRoute):
         self.host_regex, self.host_format, self.param_convertors = compile_path(host)
 
     @property
-    def routes(self) -> list[BaseRoute]:
+    def routes(self) -> typing.List[BaseRoute]:
         return getattr(self.app, "routes", [])
 
     def matches(self, scope: Scope) -> tuple[Match, Scope]:
@@ -581,10 +583,10 @@ class _AsyncLiftContextManager(typing.AsyncContextManager[_T]):
 
     async def __aexit__(
         self,
-        exc_type: type[BaseException] | None,
-        exc_value: BaseException | None,
-        traceback: types.TracebackType | None,
-    ) -> bool | None:
+        exc_type: typing.Optional[type[BaseException]],
+        exc_value: typing.Optional[BaseException],
+        traceback: typing.Optional[types.TracebackType],
+    ) -> typing.Optional[bool]:
         return self._cm.__exit__(exc_type, exc_value, traceback)
 
 
@@ -817,7 +819,7 @@ class Router:
         self.routes.append(route)
 
     def host(
-        self, host: str, app: ASGIApp, name: str | None = None
+        self, host: str, app: ASGIApp, name: typing.Optional[str] = None
     ) -> None:  # pragma: no cover
         route = Host(host, app=app, name=name)
         self.routes.append(route)
@@ -825,9 +827,11 @@ class Router:
     def add_route(
         self,
         path: str,
-        endpoint: typing.Callable[[Request], typing.Awaitable[Response] | Response],
-        methods: list[str] | None = None,
-        name: str | None = None,
+        endpoint: typing.Callable[
+            [Request], typing.Union[typing.Awaitable[Response], Response]
+        ],
+        methods: typing.Optional[typing.List[str]] = None,
+        name: typing.Optional[str] = None,
         include_in_schema: bool = True,
     ) -> None:  # pragma: nocover
         route = Route(
@@ -843,7 +847,7 @@ class Router:
         self,
         path: str,
         endpoint: typing.Callable[[WebSocket], typing.Awaitable[None]],
-        name: str | None = None,
+        name: typing.Optional[str] = None,
     ) -> None:  # pragma: no cover
         route = WebSocketRoute(path, endpoint=endpoint, name=name)
         self.routes.append(route)
@@ -851,8 +855,8 @@ class Router:
     def route(
         self,
         path: str,
-        methods: list[str] | None = None,
-        name: str | None = None,
+        methods: typing.Optional[typing.List[str]] = None,
+        name: typing.Optional[str] = None,
         include_in_schema: bool = True,
     ) -> typing.Callable:  # type: ignore[type-arg]
         """
@@ -880,7 +884,9 @@ class Router:
 
         return decorator
 
-    def websocket_route(self, path: str, name: str | None = None) -> typing.Callable:  # type: ignore[type-arg]
+    def websocket_route(
+        self, path: str, name: typing.Optional[str] = None
+    ) -> typing.Callable:  # type: ignore[type-arg]
         """
         We no longer document this decorator style API, and its usage is discouraged.
         Instead you should use the following approach:
