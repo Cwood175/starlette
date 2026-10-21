@@ -423,9 +423,9 @@ class TestClient(httpx.Client):
         follow_redirects: typing.Optional[bool],
         allow_redirects: typing.Optional[bool],
     ) -> typing.Union[bool, httpx._client.UseClientDefault]:
-        redirect: typing.Union[
-            bool, httpx._client.UseClientDefault
-        ] = httpx._client.USE_CLIENT_DEFAULT
+        redirect: typing.Union[bool, httpx._client.UseClientDefault] = (
+            httpx._client.USE_CLIENT_DEFAULT
+        )
         if allow_redirects is not None:
             message = (
                 "The `allow_redirects` argument is deprecated. "
@@ -714,6 +714,7 @@ class TestClient(httpx.Client):
         url = urljoin("ws://testserver", url)
         headers = kwargs.get("headers", {})
         headers.setdefault("connection", "upgrade")
+        headers.setdefault("upgrade", "websocket")
         headers.setdefault("sec-websocket-key", "testserver==")
         headers.setdefault("sec-websocket-version", "13")
         if subprotocols is not None:
